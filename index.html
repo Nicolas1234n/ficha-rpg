@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codex de Personagens Offline</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0a0a;
+    --card: #1a1414;
+    --border: #3d2f2f;
+    --gold: #d4af37;
+    --text: #e8dcc6;
+    --red: #8b0000;
+    --blue: #1e3a8a;
+    --green: #10b981;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    background-image: url('https://www.transparenttextures.com/patterns/dark-leather.png');
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+  }
+.container { max-width: 1200px; margin: 0 auto; }
+  h1 {
+    font-family: 'Cinzel', serif;
+    text-align: center;
+    color: var(--gold);
+    font-size: 42px;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+  }
+.subtitulo { text-align: center; color: #a89a8c; margin-bottom: 20px; }
+.status-save { text-align: center; font-size: 14px; color: var(--green); height: 20px; margin-bottom: 10px; }
+.mesa-rpg {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+.mesa-rpg h2 { font-family: 'Cinzel', serif; color: var(--gold); margin: 0 0 12px 0; }
+.link-mesa { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.link-mesa input {
+    background: #120d0d; border: 1px solid var(--border); color: var(--text);
+    padding: 10px; border-radius: 4px; width: 300px; max-width: 100%;
+  }
+.personagem {
+    background: var(--card); border: 2px solid var(--border); border-radius: 8px;
+    padding: 24px; margin-bottom: 30px; position: relative;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: all 0.3s;
+  }
+.personagem.minimizado { padding: 16px 24px; }
+.personagem.minimizado.conteudo-ficha { display: none; }
+.personagem.minimizado.header { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+.header {
+    display: flex; gap: 24px; margin-bottom: 20px;
+    border-bottom: 1px solid var(--border); padding-bottom: 20px; align-items: center;
+  }
+.btn-minimizar-ficha {
+    position: absolute; top: 16px; left: 16px; background: var(--gold); color: var(--bg);
+    border: none; border-radius: 4px; width: 28px; height: 28px; font-size: 18px;
+    font-weight: 700; cursor: pointer; z-index: 10;
+  }
+.retrato-wrapper { position: relative; margin-left: 40px; }
+.retrato {
+    width: 140px; height: 140px; border-radius: 4px; object-fit: cover;
+    border: 3px solid var(--gold); transition: all 0.3s;
+  }
+.personagem.minimizado.retrato { width: 60px; height: 60px; }
+.btn-foto {
+    position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+    background: var(--gold); color: var(--bg); border: none; border-radius: 4px;
+    padding: 4px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+.personagem.minimizado.btn-foto { display: none; }
+.btn-deletar {
+    position: absolute; top: 16px; right: 16px; background: var(--red); color: white;
+    border: none; border-radius: 4px; padding: 6px 12px; font-size: 14px; cursor: pointer;
+  }
+.acoes-ficha { position: absolute; top: 16px; right: 80px; display: flex; gap: 8px; }
+.personagem.minimizado.acoes-ficha { display: none; }
+.btn-acao {
+    background: var(--blue); color: white; border: none; border-radius: 4px;
+    padding: 6px 12px; font-size: 14px; cursor: pointer;
+  }
+.btn-acao:hover { background: #2563eb; }
+.info-basica h2 {
+    font-family: 'Cinzel', serif; margin: 0 0 12px 0; color: var(--gold);
+    font-size: 28px; transition: all 0.3s;
+  }
+.personagem.minimizado.info-basica h2 { font-size: 22px; margin: 0; }
+.tag {
+    display: inline-block; background: #2a2222; border: 1px solid var(--border);
+    padding: 5px 12px; border-radius: 4px; font-size: 13px; margin-right: 8px; margin-bottom: 6px;
+  }
+.personagem.minimizado.tag { margin-bottom: 0; }
+.personagem.minimizado.xp-bar { display: none; }
+.xp-bar {
+    background: #2a2222; height: 16px; border-radius: 8px; overflow: hidden;
+    margin: 8px 0; border: 1px solid var(--border); position: relative;
+  }
+.xp-preenchida {
+    background: linear-gradient(90deg, #f59e0b, var(--gold));
+    height: 100%; transition: width 0.5s;
+  }
+.xp-texto {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 11px; font-weight: 600; color: var(--bg); text-shadow: 0 0 2px rgba(0,0,0,0.5);
+  }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.bloco { background: #120d0d; padding: 16px; border-radius: 4px; border: 1px solid var(--border); }
+.bloco h3 {
+    font-family: 'Cinzel', serif; margin: 0 0 12px 0; color: var(--gold);
+    font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 8px;
+  }
+.stats { display: flex; justify-content: space-between; margin: 8px 0; }
+.barra {
+    background: #2a2222; height: 10px; border-radius: 2px; overflow: hidden;
+    margin-bottom: 12px; border: 1px solid var(--border);
+  }
+.barra-preenchida {
+    background: linear-gradient(90deg, var(--red), #b91c1c);
+    height: 100%; transition: width 0.3s;
+  }
+.mana.barra-preenchida { background: linear-gradient(90deg, var(--blue), #3b82f6); }
+  ul { padding-left: 18px; margin: 8px 0; }
+  li { margin-bottom: 4px; }
+.botoes { text-align: center; margin: 30px 0; }
+.btn-principal {
+    font-family: 'Cinzel', serif; background: var(--gold); color: var(--bg); border: none;
+    padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px;
+    font-weight: 700; margin: 4px;
+  }
+.btn-principal:hover { background: #f1c40f; }
+.btn-secundario { background: #3d2f2f; color: var(--text); }
+.btn-pequeno { padding: 6px 12px; font-size: 13px; }
+  [contenteditable="true"]:focus {
+    outline: 2px solid var(--gold); background: #2a2222; border-radius: 2px;
+  }
+  input[type="file"], input[type="number"], input[type="text"], input[type="password"], select {
+    background: #120d0d; border: 1px solid var(--border); color: var(--text);
+    padding: 6px; border-radius: 4px;
+  }
+  input[type="number"] { width: 60px; }
+.missao-form {
+    display: grid; grid-template-columns: 2fr 1fr 1fr auto auto;
+    gap: 8px; margin-bottom: 12px; align-items: center;
+  }
+.missao-item {
+    background: #0a0707; padding: 10px; border-radius: 4px; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+.missao-concluida { opacity: 0.5; text-decoration: line-through; }
+.grafico-container { position: relative; height: 250px; margin-top: 16px; }
+.dado-sistema {
+    position: fixed; left: 20px; top: 50%; transform: translateY(-50%);
+    background: var(--card); border: 2px solid var(--gold); border-radius: 8px;
+    padding: 16px; width: 140px; text-align: center;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); z-index: 999;
+  }
+.dado-sistema h3 { font-family: 'Cinzel', serif; color: var(--gold); margin: 0 0 12px 0; font-size: 16px; }
+.dado-resultado {
+    font-size: 48px; font-family: 'Cinzel', serif; color: var(--gold); margin: 8px 0;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5); min-height: 60px;
+    display: flex; align-items: center; justify-content: center;
+  }
+.dado-resultado.rolando { animation: tremer 0.1s infinite; }
+.dado-resultado.critico { color: var(--green); text-shadow: 0 0 15px rgba(16, 185, 129, 0.8); }
+.dado-resultado.falha { color: var(--red); text-shadow: 0 0 15px rgba(139, 0, 0, 0.8); }
+  @keyframes tremer {
+    0% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } 100% { transform: rotate(-3deg); }
+  }
+.btn-dado {
+    font-family: 'Cinzel', serif; background: var(--gold); color: var(--bg); border: none;
+    padding: 10px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;
+    font-weight: 700; width: 100%; margin-bottom: 12px;
+  }
+.btn-dado:hover { background: #f1c40f; }
+.dado-historico { border-top: 1px solid var(--border); padding-top: 8px; font-size: 12px; color: #a89a8c; }
+.dado-historico span {
+    display: inline-block; background: #0a0707; border: 1px solid var(--border);
+    padding: 2px 6px; border-radius: 3px; margin: 2px; color: var(--text);
+  }
+.ia-mestre {
+    position: fixed; right: 20px; bottom: 20px; width: 380px; height: 500px;
+    background: var(--card); border: 2px solid var(--gold); border-radius: 8px;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4); z-index: 1000;
+    display: flex; flex-direction: column; transition: all 0.3s;
+    overflow: hidden;
+  }
+.ia-mestre.minimizado { height: 50px; width: 200px; }
+.ia-mestre.bloqueado.ia-body {
+    display: none!important;
+}
+.ia-header {
+    font-family: 'Cinzel', serif; background: #2a2222; color: var(--gold);
+    padding: 12px 16px; border-radius: 6px 6px 0 0; display: flex;
+    justify-content: space-between; align-items: center; cursor: pointer;
+  }
+.ia-toggle { background: none; border: none; color: var(--gold); font-size: 20px; cursor: pointer; }
+.ia-body { flex: 1; display: flex; flex-direction: column; padding: 12px; overflow: hidden; }
+.ia-mestre.minimizado.ia-body { display: none; }
+.ia-contexto {
+    background: #0a0707; border: 1px solid var(--border); border-radius: 4px;
+    padding: 8px; font-size: 12px; margin-bottom: 8px; max-height: 60px; overflow-y: auto;
+  }
+.ia-contexto strong { color: var(--gold); }
+.ia-chat {
+    flex: 1; background: #0a0707; border: 1px solid var(--border); border-radius: 4px;
+    padding: 8px; overflow-y: auto; margin-bottom: 8px; font-size: 13px;
+  }
+.ia-msg { margin-bottom: 10px; padding: 6px 8px; border-radius: 4px; }
+.ia-msg.user { background: #1a1414; border-left: 2px solid var(--blue); }
+.ia-msg.ai { background: #1a1414; border-left: 2px solid var(--gold); }
+.ia-input-area { display: flex; gap: 6px; }
+.ia-input-area input {
+    flex: 1; background: #120d0d; border: 1px solid var(--border); color: var(--text);
+    padding: 8px; border-radius: 4px; font-size: 13px;
+  }
+.ia-acoes-rapidas { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+.ia-btn-rapido {
+    background: #2a2222; border: 1px solid var(--border); color: var(--text);
+    padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer;
+  }
+.ia-btn-rapido:hover { background: var(--gold); color: var(--bg); }
+.especial-nome { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+.especial-nome input { flex: 1; }
+.especial-label { color: var(--gold); font-weight: 600; }
+.ia-login {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--card);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    text-align: center;
+  }
+.ia-mestre.minimizado.ia-login { display: none; }
+.ia-login h3 { font-family: 'Cinzel', serif; color: var(--gold); margin-bottom: 15px; }
+.ia-login input {
+    width: 200px; margin-bottom: 12px; text-align: center;
+    background: #120d0d; border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 4px;
+  }
+.erro-senha { color: var(--red); font-size: 12px; margin-top: 8px; height: 16px; }
+
+  @media (max-width: 1400px) {
+.dado-sistema { position: static; transform: none; margin: 0 auto 20px auto; }
+.ia-mestre { position: static; width: 100%; margin: 20px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="dado-sistema">
+  <h3>Dado D20</h3>
+  <div class="dado-resultado" id="dado-resultado">-</div>
+  <button class="btn-dado" onclick="rolarD20()">Rolar</button>
+  <div class="dado-historico">
+    Últimas: <div id="dado-historico-lista"></div>
+  </div>
+</div>
+
+<div class="ia-mestre" id="ia-mestre">
+  <div class="ia-header" onclick="toggleIA()">
+    <span>Assistente do Mestre 🔐</span>
+    <button class="ia-toggle" id="ia-toggle">−</button>
+  </div>
+  <div class="ia-login" id="ia-login">
+    <h3>🔐 Área do Mestre</h3>
+    <p style="color: #a89a8c; font-size: 13px; margin-bottom: 15px;">Digite a senha para liberar a IA</p>
+    <input type="password" id="senha-mestre" placeholder="Senha do mestre" onkeypress="if(event.key==='Enter') liberarIA()">
+    <button class="btn-principal btn-pequeno" onclick="liberarIA()">Liberar</button>
+    <div class="erro-senha" id="erro-senha"></div>
+  </div>
+  <div class="ia-body">
+    <div class="ia-contexto" id="ia-contexto">
+      <strong>Contexto:</strong> <span id="ia-contexto-texto">Nenhum personagem selecionado</span>
+    </div>
+    <div class="ia-acoes-rapidas">
+      <button class="ia-btn-rapido" onclick="iaPromptRapido('Crie um NPC aleatório pra essa cena')">+ NPC</button>
+      <button class="ia-btn-rapido" onclick="iaPromptRapido('Descreva a sala atual com 3 detalhes sensoriais')">Descrever</button>
+      <button class="ia-btn-rapido" onclick="iaPromptRapido('Crie um gancho de plot baseado no último feito')">Gancho</button>
+      <button class="ia-btn-rapido" onclick="iaPromptRapido('Resumo da regra de combate D&D 5e')">Regra</button>
+      <button class="ia-btn-rapido" style="background: var(--red);" onclick="bloquearIADenovo()">Bloquear</button>
+    </div>
+    <div class="ia-chat" id="ia-chat">
+      <div class="ia-msg ai">Sou seu assistente de mesa. Me fala o que precisa: NPCs, descrições, regras, ganchos. Eu uso os dados da ficha ativa como contexto.</div>
+    </div>
+    <div class="ia-input-area">
+      <input type="text" id="ia-input" placeholder="Pedir algo pro assistente..." onkeypress="if(event.key==='Enter') enviarIA()">
+      <button class="btn-acao" onclick="enviarIA()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <h1>Codex de Personagens</h1>
+  <p class="subtitulo">Salvamento automático local - sem internet</p>
+  <div class="status-save" id="status-save">Pronto</div>
+
+  <div class="mesa-rpg">
+    <h2>Mesa de RPG</h2>
+    <div class="link-mesa">
+      <input type="text" id="link-rede-social" placeholder="Cole o link do WhatsApp/Discord da mesa">
+      <button class="btn-principal" onclick="abrirMesa()">Abrir Mesa</button>
+      <select id="select-personagem-ativo" onchange="atualizarContextoIA()" style="width: 200px;">
+        <option value="">Personagem ativo p/ IA</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="botoes">
+    <button class="btn-principal" onclick="adicionarPersonagem()">+ Forjar Novo Herói</button>
+    <button class="btn-principal btn-secundario" onclick="exportarGrimorio()">Exportar Grimório</button>
+    <button class="btn-principal btn-secundario" onclick="importarGrimorio()">Importar Grimório</button>
+    <button class="btn-principal" style="background: var(--red);" onclick="resetarTudo()">Reset Total</button>
+  </div>
+
+  <div id="lista-personagens"></div>
+</div>
+
+<script>
+  let personagensData = {};
+  let saveTimeout;
+  let graficos = {};
+  let historicoDado = [];
+  let personagemAtivoIA = '';
+
+  const API_KEY = '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';
+  const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+  const MODEL = 'llama-3.1-8b-instant';
+
+  const SENHA_MESTRE = 'treeh';
+
+  function mostrarStatus(texto) {
+    const status = document.getElementById('status-save');
+    status.textContent = texto;
+    setTimeout(() => status.textContent = '', 2000);
+  }
+
+  function salvarLocal() {
+    const data = {
+      linkMesa: document.getElementById('link-rede-social').value,
+      personagens: personagensData,
+      historicoDado: historicoDado
+    };
+    localStorage.setItem('codexRPGOffline', JSON.stringify(data));
+    mostrarStatus('Salvo!');
+  }
+
+  function carregarLocal() {
+    const data = localStorage.getItem('codexRPGOffline');
+    if (data) {
+      const parsed = JSON.parse(data);
+      document.getElementById('link-rede-social').value = parsed.linkMesa || '';
+      personagensData = parsed.personagens || {};
+      historicoDado = parsed.historicoDado || [];
+      atualizarHistoricoDado();
+    }
+    if (Object.keys(personagensData).length === 0) {
+      adicionarPersonagem();
+    }
+    renderizarPersonagens();
+    atualizarSelectPersonagem();
+    checarIALiberada();
+    mostrarStatus('Carregado!');
+  }
+
+  function debounceSalvar() {
+    clearTimeout(saveTimeout);
+    mostrarStatus('Salvando...');
+    saveTimeout = setTimeout(salvarLocal, 800);
+  }
+
+  function rolarD20() {
+    const resultadoEl = document.getElementById('dado-resultado');
+    resultadoEl.classList.add('rolando');
+    resultadoEl.classList.remove('critico', 'falha');
+
+    let contador = 0;
+    const intervalo = setInterval(() => {
+      resultadoEl.textContent = Math.floor(Math.random() * 20) + 1;
+      contador++;
+      if (contador > 10) {
+        clearInterval(intervalo);
+        const resultado = Math.floor(Math.random() * 20) + 1;
+        resultadoEl.textContent = resultado;
+        resultadoEl.classList.remove('rolando');
+
+        if (resultado === 20) resultadoEl.classList.add('critico');
+        if (resultado === 1) resultadoEl.classList.add('falha');
+
+        historicoDado.unshift(resultado);
+        if (historicoDado.length > 5) historicoDado.pop();
+        atualizarHistoricoDado();
+        salvarLocal();
+      }
+    }, 50);
+  }
+
+  function atualizarHistoricoDado() {
+    const lista = document.getElementById('dado-historico-lista');
+    lista.innerHTML = historicoDado.map(n => `<span>${n}</span>`).join('');
+  }
+
+  function abrirMesa() {
+    const link = document.getElementById('link-rede-social').value;
+    if (link) {
+      window.open(link, '_blank');
+    } else {
+      alert('Cole o link da mesa primeiro!');
+    }
+  }
+
+  function toggleIA() {
+    const ia = document.getElementById('ia-mestre');
+    const toggle = document.getElementById('ia-toggle');
+    ia.classList.toggle('minimizado');
+    toggle.textContent = ia.classList.contains('minimizado')? '+' : '−';
+  }
+
+  function liberarIA() {
+    const senhaDigitada = document.getElementById('senha-mestre').value;
+    const erro = document.getElementById('erro-senha');
+    const iaMestre = document.getElementById('ia-mestre');
+    if (senhaDigitada === SENHA_MESTRE) {
+      document.getElementById('ia-login').style.display = 'none';
+      iaMestre.classList.remove('bloqueado');
+      iaMestre.classList.remove('minimizado'); // Abre a IA quando libera
+      document.getElementById('ia-toggle').textContent = '−';
+      localStorage.setItem('ia_liberada', 'true');
+      erro.textContent = '';
+      document.getElementById('senha-mestre').value = '';
+    } else {
+      erro.textContent = 'Senha incorreta!';
+      document.getElementById('senha-mestre').value = '';
+    }
+  }
+
+  function bloquearIADenovo() {
+    const iaMestre = document.getElementById('ia-mestre');
+    document.getElementById('ia-login').style.display = 'flex';
+    iaMestre.classList.add('bloqueado');
+    iaMestre.classList.add('minimizado'); // Minimiza quando bloqueia
+    document.getElementById('ia-toggle').textContent = '+';
+    localStorage.removeItem('ia_liberada');
+  }
+
+  function checarIALiberada() {
+    const iaMestre = document.getElementById('ia-mestre');
+    if (localStorage.getItem('ia_liberada') === 'true') {
+      document.getElementById('ia-login').style.display = 'none';
+      iaMestre.classList.remove('bloqueado');
+      iaMestre.classList.remove('minimizado');
+      document.getElementById('ia-toggle').textContent = '−';
+    } else {
+      document.getElementById('ia-login').style.display = 'flex';
+      iaMestre.classList.add('bloqueado');
+      iaMestre.classList.add('minimizado'); // Já nasce minimizado
+      document.getElementById('ia-toggle').textContent = '+';
+    }
+  }
+
+  function toggleFicha(id) {
+    const ficha = document.querySelector(`[data-id="${id}"]`);
+    const btn = ficha.querySelector('.btn-minimizar-ficha');
+    ficha.classList.toggle('minimizado');
+    btn.textContent = ficha.classList.contains('minimizado')? '+' : '−';
+    personagensData[id].minimizado = ficha.classList.contains('minimizado');
+    if (!ficha.classList.contains('minimizado')) {
+      setTimeout(() => desenharGrafico(id, personagensData[id].historicoXP || []), 300);
+    }
+    salvarLocal();
+  }
+
+  function atualizarSelectPersonagem() {
+    const select = document.getElementById('select-personagem-ativo');
+    select.innerHTML = '<option value="">Personagem ativo p/ IA</option>';
+    Object.entries(personagensData).forEach(([id, p]) => {
+      select.innerHTML += `<option value="${id}">${p.nome}</option>`;
+    });
+  }
+
+  function atualizarContextoIA() {
+    const id = document.getElementById('select-personagem-ativo').value;
+    personagemAtivoIA = id;
+    const contextoEl = document.getElementById('ia-contexto-texto');
+
+    if (!id ||!personagensData[id]) {
+      contextoEl.textContent = 'Nenhum personagem selecionado';
+      return;
+    }
+
+    const p = personagensData[id];
+    const especialTexto = p.especialNome? `${p.especialNome}: ${p.atributos.especial}` : '';
+    contextoEl.textContent = `${p.nome} - Nv${p.nivel} ${p.classe} ${p.raca} | HP: ${p.vidaAtual}/${p.vidaMax} | Status: ${p.status} | ${especialTexto} | Último feito: ${p.ultimoFeito}`;
+  }
+
+  function gerarContextoCompleto() {
+    if (!personagemAtivoIA ||!personagensData[personagemAtivoIA]) return 'Sem personagem ativo no momento.';
+
+    const p = personagensData[personagemAtivoIA];
+    const especialInfo = p.especialNome? `${p.especialNome}: ${p.atributos.especial}` : 'Sem atributo especial definido';
+    return `
+Você é o Assistente do Mestre de RPG. Responda curto e útil pra mesa. Use tom imersivo.
+
+CONTEXTO DA CENA:
+Personagem em foco: ${p.nome}, Nível ${p.nivel} ${p.classe} ${p.raca}
+Vida: ${p.vidaAtual}/${p.vidaMax} | Energia: ${p.energiaAtual}/${p.energiaMax} | Status: ${p.status}
+Atributos: FOR ${p.atributos.forca} DES ${p.atributos.destreza} CON ${p.atributos.constituicao} INT ${p.atributos.inteligencia} SAB ${p.atributos.sabedoria} CAR ${p.atributos.carisma}
+Especial: ${especialInfo}
+Aparência: ${p.aparencia}
+Último feito: ${p.ultimoFeito}
+Crônica: ${p.cronica}
+Missões ativas: ${(p.missoes || []).filter(m =>!m.concluida).map(m => m.nome).join(', ') || 'Nenhuma'}
+
+INSTRUÇÕES: Use esse contexto pra responder. Seja criativo mas coerente com a ficha. Nunca quebre a imersão. Respostas diretas, 2-4 linhas.
+`.trim();
+  }
+
+  function iaPromptRapido(texto) {
+    document.getElementById('ia-input').value = texto;
+    enviarIA();
+  }
+
+  async function enviarIA() {
+    const input = document.getElementById('ia-input');
+    const chat = document.getElementById('ia-chat');
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    chat.innerHTML += `<div class="ia-msg user"><strong>Você:</strong> ${texto}</div>`;
+    input.value = '';
+    chat.scrollTop = chat.scrollHeight;
+
+    if (!API_KEY ||!API_KEY.startsWith('gsk_')) {
+      chat.innerHTML += `<div class="ia-msg ai"><strong>Assistente:</strong> Key da Groq inválida.</div>`;
+      chat.scrollTop = chat.scrollHeight;
+      return;
+    }
+
+    const contexto = gerarContextoCompleto();
+    const promptFinal = `${contexto}\n\nMestre: ${texto}\n\nResponda como um mestre de RPG experiente, em português, de forma criativa e concisa.`;
+
+    chat.innerHTML += `<div class="ia-msg ai"><strong>Assistente:</strong> Pensando...</div>`;
+    chat.scrollTop = chat.scrollHeight;
+
+    try {
+      const resposta = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [{ role: 'user', content: promptFinal }],
+          temperature: 0.8,
+          max_tokens: 500
+        })
+      });
+
+      if (!resposta.ok) {
+        throw new Error(`API error ${resposta.status}`);
+      }
+
+      const data = await resposta.json();
+      const textoIA = data.choices[0].message.content;
+      chat.lastChild.innerHTML = `<strong>Assistente:</strong> ${textoIA}`;
+    } catch (err) {
+      chat.lastChild.innerHTML = `<strong>Assistente:</strong> Deu erro na API da Groq. Erro: ${err.message}`;
+    }
+
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function trocarFoto(botao) {
+    botao.nextElementSibling.click();
+  }
+
+  function carregarFoto(input, id) {
+    const file = input.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        personagensData[id].retrato = e.target.result;
+        debounceSalvar();
+        renderizarPersonagens();
+      }
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function gerarImagemFicha(id) {
+    const personagem = document.querySelector(`[data-id="${id}"]`);
+    const acoes = personagem.querySelector('.acoes-ficha');
+    const deletar = personagem.querySelector('.btn-deletar');
+    const btnMin = personagem.querySelector('.btn-minimizar-ficha');
+    acoes.style.display = 'none';
+    deletar.style.display = 'none';
+    btnMin.style.display = 'none';
+
+    html2canvas(personagem, {
+      backgroundColor: '#1a1414',
+      scale: 2
+    }).then(canvas => {
+      acoes.style.display = 'flex';
+      deletar.style.display = 'block';
+      btnMin.style.display = 'block';
+
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ficha-${personagensData[id].nome.replace(/\s/g, '_')}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        const linkMesa = document.getElementById('link-rede-social').value;
+        if (linkMesa && confirm('Imagem baixada! Abrir a mesa pra enviar?')) {
+          window.open(linkMesa, '_blank');
+        }
+      });
+    });
+  }
+
+  function adicionarPersonagem() {
+    const novoId = 'p' + Date.now();
+    personagensData[novoId] = {
+      nome: 'Novo Herói',
+      classe: 'Classe',
+      nivel: 1,
+      raca: 'Raça',
+      retrato: 'https://placehold.co/140x140/1a1414/d4af37?text=Herói',
+      vidaAtual: 20,
+      vidaMax: 20,
+      energiaAtual: 15,
+      energiaMax: 15,
+      xp: 0,
+      status: 'Saudável',
+      atributos: { forca: 10, destreza: 10, constituicao: 10, inteligencia: 10, sabedoria: 10, carisma: 10, especial: 10 },
+      especialNome: 'Especial',
+      inventario: ['Item inicial'],
+      talentos: ['Talento inicial'],
+      aparencia: 'Descreva a aparência física: altura, cabelo, olhos, cicatrizes...',
+      passado: 'Conte a história de origem do personagem...',
+      cronica: 'Escreva a história atual do personagem...',
+      ultimoFeito: 'Oque aconteceu por último...',
+      missoes: [],
+      historicoXP: [{data: new Date().toISOString(), xp: 0}],
+      minimizado: false
+    };
+    salvarLocal();
+    renderizarPersonagens();
+    atualizarSelectPersonagem();
+  }
+
+  function deletarPersonagem(id) {
+    if (Object.keys(personagensData).length > 1) {
+      delete personagensData[id];
+      if (personagemAtivoIA === id) {
+        personagemAtivoIA = '';
+        atualizarContextoIA();
+      }
+      salvarLocal();
+      renderizarPersonagens();
+      atualizarSelectPersonagem();
+    } else {
+      alert('O Codex precisa de ao menos um herói.');
+    }
+  }
+
+  function reiniciarFicha(id) {
+    if (!confirm(`Tem certeza que quer reiniciar a ficha de ${personagensData[id].nome}? Vida, energia, XP e missões vão pro zero.`)) return;
+
+    const p = personagensData[id];
+    const nomeAntigo = p.nome;
+    const classeAntiga = p.classe;
+    const racaAntiga = p.raca;
+    const retratoAntigo = p.retrato;
+    const especialNomeAntigo = p.especialNome;
+
+    personagensData[id] = {
+      nome: nomeAntigo,
+      classe: classeAntiga,
+      nivel: 1,
+      raca: racaAntiga,
+      retrato: retratoAntigo,
+      vidaAtual: 20,
+      vidaMax: 20,
+      energiaAtual: 15,
+      energiaMax: 15,
+      xp: 0,
+      status: 'Saudável',
+      atributos: { forca: 10, destreza: 10, constituicao: 10, inteligencia: 10, sabedoria: 10, carisma: 10, especial: 10 },
+      especialNome: especialNomeAntigo,
+      inventario: ['Item inicial'],
+      talentos: ['Talento inicial'],
+      aparencia: 'Descreva a aparência física: altura, cabelo, olhos, cicatrizes...',
+      passado: 'Conte a história de origem do personagem...',
+      cronica: 'Escreva a história atual do personagem...',
+      ultimoFeito: 'O que aconteceu por último...',
+      missoes: [],
+      historicoXP: [{data: new Date().toISOString(), xp: 0}],
+      minimizado: false
+    };
+
+    salvarLocal();
+    renderizarPersonagens();
+    if (id === personagemAtivoIA) atualizarContextoIA();
+    mostrarStatus('Ficha reiniciada!');
+  }
+
+  function resetarTudo() {
+    if (!confirm('Isso vai apagar TODAS as fichas e resetar tudo. Tem certeza?')) return;
+    if (!confirm('Última chance. Vai perder tudo mesmo. Confirma?')) return;
+
+    localStorage.removeItem('codexRPGOffline');
+    localStorage.removeItem('ia_liberada');
+    personagensData = {};
+    historicoDado = [];
+    adicionarPersonagem();
+    renderizarPersonagens();
+    atualizarSelectPersonagem();
+    checarIALiberada();
+    mostrarStatus('Tudo resetado!');
+  }
+
+  function atualizarCampo(id, campo, valor) {
+    if (campo.includes('.')) {
+      const [pai, filho] = campo.split('.');
+      personagensData[id][pai][filho] = isNaN(valor)? valor : Number(valor);
+    } else {
+      personagensData[id][campo] = isNaN(valor)? valor : Number(valor);
+    }
+    if (id === personagemAtivoIA) atualizarContextoIA();
+    debounceSalvar();
+  }
+
+  function atualizarArray(id, campo, index, valor) {
+    personagensData[id][campo][index] = valor;
+    debounceSalvar();
+  }
+
+  function criarMissao(id) {
+    const form = document.getElementById(`form-missao-${id}`);
+    const nome = form.querySelector('.missao-nome').value;
+    const xp = parseInt(form.querySelector('.missao-xp').value) || 0;
+    const pontos = parseInt(form.querySelector('.missao-pontos').value) || 0;
+    const atributo = form.querySelector('.missao-atributo').value;
+
+    if (!nome) {
+      alert('Dê um nome pra missão!');
+      return;
+    }
+
+    if (!personagensData[id].missoes) personagensData[id].missoes = [];
+    personagensData[id].missoes.push({
+      nome, xp, pontos, atributo,
+      concluida: false,
+      criada: new Date().toISOString()
+    });
+
+    form.querySelector('.missao-nome').value = '';
+    form.querySelector('.missao-xp').value = '10';
+    form.querySelector('.missao-pontos').value = '1';
+
+    salvarLocal();
+    renderizarPersonagens();
+  }
+
+  function concluirMissao(id, index) {
+    const missao = personagensData[id].missoes[index];
+    if (missao.concluida) return;
+
+    missao.concluida = true;
+    missao.concluidaEm = new Date().toISOString();
+
+    personagensData[id].xp += missao.xp;
+    personagensData[id].historicoXP.push({
+      data: new Date().toISOString(),
+      xp: personagensData[id].xp
+    });
+
+    personagensData[id].atributos[missao.atributo] += missao.pontos;
+
+    const novoNivel = Math.floor(personagensData[id].xp / 100) + 1;
+    if (novoNivel > personagensData[id].nivel) {
+      personagensData[id].nivel = novoNivel;
+      personagensData[id].vidaMax += 5;
+      personagensData[id].vidaAtual = personagensData[id].vidaMax;
+      personagensData[id].energiaMax += 3;
+      personagensData[id].energiaAtual = personagensData[id].energiaMax;
+      alert(`🎉 ${personagensData[id].nome} subiu para o nível ${novoNivel}!`);
+    }
+
+    salvarLocal();
+    renderizarPersonagens();
+    if (id === personagemAtivoIA) atualizarContextoIA();
+  }
+
+  function deletarMissao(id, index) {
+    personagensData[id].missoes.splice(index, 1);
+    salvarLocal();
+    renderizarPersonagens();
+  }
+
+  function exportarGrimorio() {
+    const data = JSON.stringify({
+      linkMesa: document.getElementById('link-rede-social').value,
+      personagens: personagensData,
+      historicoDado: historicoDado
+    });
+    const blob = new Blob([data], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'codex-rpg.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    mostrarStatus('Grimório exportado!');
+  }
+
+  function importarGrimorio() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = e => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = readerEvent => {
+        try {
+          const content = JSON.parse(readerEvent.target.result);
+          document.getElementById('link-rede-social').value = content.linkMesa || '';
+          personagensData = content.personagens || {};
+          historicoDado = content.historicoDado || [];
+          salvarLocal();
+          renderizarPersonagens();
+          atualizarHistoricoDado();
+          atualizarSelectPersonagem();
+          checarIALiberada();
+          mostrarStatus('Grimório importado!');
+        } catch(err) {
+          alert('Arquivo inválido!');
+        }
+      }
+      reader.readAsText(file);
+    }
+    input.click();
+  }
+
+  function renderizarPersonagens() {
+    const lista = document.getElementById('lista-personagens');
+    lista.innerHTML = '';
+
+    Object.entries(personagensData).forEach(([id, p]) => {
+      const xpAtual = p.xp % 100;
+      const progressoXP = (xpAtual / 100) * 100;
+      const minimizado = p.minimizado || false;
+
+      if (!p.atributos.especial) p.atributos.especial = 10;
+      if (!p.especialNome) p.especialNome = 'Especial';
+
+      const div = document.createElement('div');
+      div.className = `personagem ${minimizado? 'minimizado' : ''}`;
+      div.setAttribute('data-id', id);
+      div.innerHTML = `
+        <button class="btn-minimizar-ficha" onclick="toggleFicha('${id}')">${minimizado? '+' : '−'}</button>
+        <div class="acoes-ficha">
+          <button class="btn-acao" onclick="gerarImagemFicha('${id}')">Gerar Imagem</button>
+          <button class="btn-acao" style="background: #b91c1c;" onclick="reiniciarFicha('${id}')">Reiniciar</button>
+        </div>
+        <button class="btn-deletar" onclick="deletarPersonagem('${id}')">Banir</button>
+        <div class="header">
+          <div class="retrato-wrapper">
+            <img src="${p.retrato}" class="retrato" alt="Retrato">
+            <button class="btn-foto" onclick="trocarFoto(this)">Retrato</button>
+            <input type="file" accept="image/*" onchange="carregarFoto(this, '${id}')" style="display:none">
+          </div>
+          <div class="info-basica">
+            <h2 contenteditable="true" oninput="atualizarCampo('${id}', 'nome', this.innerText)">${p.nome}</h2>
+            <span class="tag" contenteditable="true" oninput="atualizarCampo('${id}', 'classe', this.innerText)">${p.classe}</span>
+            <span class="tag">Nível ${p.nivel}</span>
+            <span class="tag" contenteditable="true" oninput="atualizarCampo('${id}', 'raca', this.innerText)">${p.raca}</span>
+            <div class="xp-bar">
+              <div class="xp-preenchida" style="width: ${progressoXP}%"></div>
+              <div class="xp-texto">${xpAtual} / 100 XP | Total: ${p.xp}</div>
+            </div>
+          </div>
+        </div>
+        <div class="conteudo-ficha">
+          <div class="grid">
+            <div class="bloco">
+              <h3>Vitalidade</h3>
+              <div class="stats">
+                <span>Vida: <span contenteditable="true" oninput="atualizarCampo('${id}', 'vidaAtual', this.innerText); atualizarBarras('${id}')">${p.vidaAtual}</span>/<span contenteditable="true" oninput="atualizarCampo('${id}', 'vidaMax', this.innerText); atualizarBarras('${id}')">${p.vidaMax}</span></span>
+              </div>
+              <div class="barra"><div class="barra-preenchida" id="vida-${id}" style="width: ${p.vidaAtual/p.vidaMax*100}%"></div></div>
+              <div class="stats">
+                <span>Energia: <span contenteditable="true" oninput="atualizarCampo('${id}', 'energiaAtual', this.innerText); atualizarBarras('${id}')">${p.energiaAtual}</span>/<span contenteditable="true" oninput="atualizarCampo('${id}', 'energiaMax', this.innerText); atualizarBarras('${id}')">${p.energiaMax}</span></span>
+              </div>
+              <div class="barra"><div class="barra-preenchida mana" id="energia-${id}" style="width: ${p.energiaAtual/p.energiaMax*100}%"></div></div>
+              <p><strong>Status:</strong> <span contenteditable="true" oninput="atualizarCampo('${id}', 'status', this.innerText)">${p.status}</span></p>
+            </div>
+            <div class="bloco">
+              <h3>Atributos</h3>
+              <div class="especial-nome">
+                <span class="especial-label">Especial:</span>
+                <input type="text" value="${p.especialNome}" oninput="atualizarCampo('${id}', 'especialNome', this.value)" placeholder="Invocação, Poder, Fé...">
+              </div>
+              <div class="stats"><span>Força</span><span contenteditable="true" oninput="atualizarCampo('${id}', 'atributos.forca', this.innerText)">${p.atributos.forca}</span></div>
+              <div class="stats"><span>Destreza</span><span contenteditable="true" oninput="atualizarCampo('${id}', 'atributos.destreza', this.innerText)">${p.atributos.destreza}</span></div>
+              <div class="stats"><span>Constituição</span><span contenteditable="true" oninput="atualizarCampo('${id}', 'atributos.constituicao', this.innerText)">${p.atributos.constituicao}</span></div>
+              <div class="stats"><span>Inteligência</span><span contenteditable="true" oninput="atualizarCampo('${id}', 'atributos.inteligencia', this.innerText)">${p.atributos.inteligencia}</span></div>
+              <div class="stats"><span>Sabedoria</span><span contenteditable="true" oninput="atualizarCampo('${id}', 'atributos.sabedoria', this.innerText)">${p.atributos.sabedoria}</span></div>
+              <div class="stats"><span>Carisma</span><span contenteditable="true" oninput="atualizarCampo('${id}', 'atributos.carisma', this.innerText)">${p.atributos.carisma}</span></div>
+              <div class="stats"><span style="color: var(--gold); font-weight: 600;">${p.especialNome}</span><span contenteditable="true" oninput="atualizarCampo('${id}', 'atributos.especial', this.innerText)" style="color: var(--gold); font-weight: 600;">${p.atributos.especial}</span></div>
+            </div>
+            <div class="bloco">
+              <h3>Missões</h3>
+              <div class="missao-form" id="form-missao-${id}">
+                <input type="text" class="missao-nome" placeholder="Nome da missão">
+                <input type="number" class="missao-xp" placeholder="XP" value="10">
+                <input type="number" class="missao-pontos" placeholder="Pontos" value="1">
+                <select class="missao-atributo">
+                  <option value="forca">Força</option>
+                  <option value="destreza">Destreza</option>
+                  <option value="constituicao">Constituição</option>
+                  <option value="inteligencia">Inteligência</option>
+                  <option value="sabedoria">Sabedoria</option>
+                  <option value="carisma">Carisma</option>
+                  <option value="especial">${p.especialNome}</option>
+                </select>
+                <button class="btn-principal btn-pequeno" onclick="criarMissao('${id}')">+</button>
+              </div>
+              ${(p.missoes || []).map((m, i) => `
+                <div class="missao-item ${m.concluida? 'missao-concluida' : ''}">
+                  <span><strong>${m.nome}</strong> - ${m.xp} XP, +${m.pontos} ${m.atributo === 'especial'? p.especialNome : m.atributo}</span>
+                  <div>
+                    ${!m.concluida? `<button class="btn-principal btn-pequeno" onclick="concluirMissao('${id}', ${i})">Concluir</button>` : ''}
+                    <button class="btn-principal btn-pequeno btn-secundario" onclick="deletarMissao('${id}', ${i})">X</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            <div class="bloco">
+              <h3>Progresso</h3>
+              <div class="grafico-container">
+                <canvas id="grafico-${id}"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="bloco" style="margin-top: 20px;">
+            <h3>Aparência Física</h3>
+            <p contenteditable="true" oninput="atualizarCampo('${id}', 'aparencia', this.innerText)">${p.aparencia}</p>
+          </div>
+          <div class="bloco" style="margin-top: 20px;">
+            <h3>Passado</h3>
+            <p contenteditable="true" oninput="atualizarCampo('${id}', 'passado', this.innerText)">${p.passado}</p>
+          </div>
+          <div class="bloco" style="margin-top: 20px;">
+            <h3>Crônica</h3>
+            <p contenteditable="true" oninput="atualizarCampo('${id}', 'cronica', this.innerText)">${p.cronica}</p>
+          </div>
+          <div class="bloco" style="margin-top: 20px;">
+            <h3>Último Feito</h3>
+            <p contenteditable="true" oninput="atualizarCampo('${id}', 'ultimoFeito', this.innerText)">${p.ultimoFeito}</p>
+          </div>
+        </div>
+      `;
+      lista.appendChild(div);
+      if (!minimizado) desenharGrafico(id, p.historicoXP || []);
+    });
+  }
+
+  function desenharGrafico(id, historico) {
+    const ctx = document.getElementById(`grafico-${id}`);
+    if (!ctx) return;
+
+    if (graficos[id]) graficos[id].destroy();
+
+    const labels = historico.map((h, i) => i === 0? 'Início' : `Missão ${i}`);
+    const data = historico.map(h => h.xp);
+
+    graficos[id] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'XP Total',
+          data: data,
+          borderColor: '#d4af37',
+          backgroundColor: 'rgba(212, 175, 55, 0.2)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: '#e8dcc6' }, grid: { color: '#3d2f2f' } },
+          x: { ticks: { color: '#e8dcc6' }, grid: { color: '#3d2f2f' } }
+        }
+      }
+    });
+  }
+
+  function atualizarBarras(id) {
+    const p = personagensData[id];
+    if (p) {
+      document.getElementById(`vida-${id}`).style.width = Math.max(0, Math.min(100, p.vidaAtual/p.vidaMax*100)) + '%';
+      document.getElementById(`energia-${id}`).style.width = Math.max(0, Math.min(100, p.energiaAtual/p.energiaMax*100)) + '%';
+    }
+  }
+
+  document.getElementById('link-rede-social').addEventListener('input', debounceSalvar);
+  window.addEventListener('load', carregarLocal);
+</script>
+</body>
+</html>
